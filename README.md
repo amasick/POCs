@@ -1,51 +1,86 @@
+RAAS: Agentic RAG Chatbot
+Task 1: Requirement Gathering & Architecture Design
+
+Design end-to-end architecture integrating RAG pipeline, agentic reasoning, and context layer.
+
+Finalize integration points with Confluence, GitHub, and internal documentation systems.
+
+Task 2: Data Integration & Preparation
+
+Collect and preprocess data from selected sources (HTML, Markdown, PDF, README files).
+
+Generate embeddings and index them in a vector database (FAISS/Chroma).
+
+Task 3: RAG Pipeline Development
+
+Implement retrieval system for document search using vector similarity.
+
+Add contextual summarization and ranking to improve response accuracy.
+
+Task 4: Agentic Layer & Orchestration
+
+Build multi-agent framework for dynamic query handling, reasoning, and memory management.
+
+Implement task routing, self-correction, and tool selection via Google ADK or LangGraph.
+
+Task 5: Backend & Frontend Integration
+
+Develop FastAPI backend endpoints for context retrieval and LLM interaction.
+
+Create Streamlit-based UI for developers to query, visualize, and validate results.
+
+Task 6: Testing & Evaluation
+
+Evaluate chatbot responses on accuracy, latency, and contextual relevance metrics.
+
+Conduct Human-in-the-Loop (HIL) validation for uncertain or low-confidence outputs.
+
+Task 7: Deployment & Documentation
+
+Containerize all modules (API + UI) using Docker for consistent deployment.
+
+Document architecture, APIs, evaluation methods, and performance benchmarks.
 
 
-## 🧠 **POC 1: VulnSentry — Agentic SCA Automation**
+🛡️ SCA Agentic Automation 
+Task 1: Problem Definition & Scope Alignment
 
-### **High-Level Product Tasks (Product & Business Monitoring)**
+Define automation goals and measurable success criteria for vulnerability management.
 
-1. Define the business problem statement and expected outcomes from SCA automation.
-2. Identify and onboard key stakeholders (Security, DevSecOps, Engineering, PM).
-3. Establish measurable success KPIs (e.g., time-to-remediation, accuracy, efficiency).
-4. Map the current manual vulnerability triage and remediation workflow.
-5. Design the future-state AI-augmented workflow including human validation steps.
-6. Define end-user personas (security analysts, developers, managers) and their roles.
-7. Create accountability and ownership mapping for each workflow stage.
-8. Identify the core functional scope for the POC (parse → classify → remediate → validate).
-9. Prioritize critical features for POC demonstration versus future enhancements.
-10. Define compliance and governance rules for automated code modifications.
-11. Establish risk boundaries, audit requirements, and rollback provisions.
-12. Design performance and reporting templates for tracking vulnerability trends.
-13. Conduct user and stakeholder review sessions on initial workflow designs.
-14. Gather feedback and refine POC objectives based on stakeholder insights.
-15. Define metrics and checkpoints to evaluate automation benefits.
-16. Review and validate POC deliverables with cross-functional stakeholders.
-17. Document final outcomes, lessons learned, and quantified impact summary.
-18. Prepare executive summary and present final POC report for leadership approval.
+Identify integration scope with scanning, tracking, and version control systems.
 
----
+Task 2: Data Ingestion & Parsing Setup
 
-## 🤖 **POC 2: FlowBot — Agentic Developer Assistant**
+Establish data pipeline for ingesting and processing scan reports.
 
-### **High-Level Product Tasks (Product & Business Monitoring)**
+Extract and classify vulnerabilities based on severity and category.
 
-1. Define the problem statement focusing on developer onboarding and productivity gaps.
-2. Identify target user groups (new developers, DevOps, QA, support engineers).
-3. Map primary blocker scenarios and repetitive developer queries.
-4. Identify all internal documentation sources (Confluence, GitHub, Q&A repositories).
-5. Define knowledge access boundaries and data governance requirements.
-6. Categorize documentation by type (setup guides, API references, SOPs).
-7. Design the conversational journey for typical developer use cases.
-8. Define chatbot intents, escalation logic, and fallback strategy.
-9. Create initial conversational flow mockups for product validation.
-10. Identify minimal POC features — contextual Q&A, documentation linking, escalation.
-11. Define advanced roadmap features (Slack/Teams integration, search capabilities).
-12. Establish measurable KPIs — resolution accuracy, time saved, satisfaction rate.
-13. Conduct limited pilot testing with selected developer teams.
-14. Collect user feedback, track engagement metrics, and assess usability.
-15. Compare pre-chatbot vs post-chatbot onboarding metrics and performance.
-16. Conduct internal stakeholder review for product experience evaluation.
-17. Document pilot findings, business benefits, and improvement areas.
-18. Prepare a POC outcome report and roadmap proposal for leadership review.
+Task 3: Agent Architecture & Design
 
----
+Design the agentic workflow including planning, reasoning, and execution layers.
+
+Define interaction logic and communication flow between core components.
+
+Task 4: Integration Development
+
+Implement system integrations for data exchange and workflow automation.
+
+Enable synchronization across all tools and data sources involved in the remediation process.
+
+Task 5: Human-in-the-Loop (HIL) Feedback System
+
+Build review interface for validation and approval of automated recommendations.
+
+Capture feedback data to continuously refine agent decisions and actions.
+
+Task 6: Testing, Simulation & Validation
+
+Conduct simulations on multiple report scenarios to validate accuracy and consistency.
+
+Verify reliability of workflows under different data and approval conditions.
+
+Task 7: Evaluation & Reporting
+
+Measure performance against defined KPIs and improvement metrics.
+
+Prepare final outcome report and summarize key learnings for stakeholders.
