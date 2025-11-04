@@ -1,0 +1,151 @@
+# file: chatbot_api.py
+
+import os
+import uuid
+from typing import List, Optional
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from pymongo import MongoClient
+import requests
+from langchain.llms import OpenAI  # adjust if using another LLM
+from langchain.prompts import PromptTemplate
+from langchain.chat_models import ChatOpenAI  # if using chat model
+from langchain.schema import HumanMessage, AIMessage, ChatMessage
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Config
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+DB_NAME = os.getenv("CHAT_DB", "chatbot_db")
+COLLECTION_NAME = os.getenv("CHAT_COLLECTION", "chat_history")
+
+RETRIEVAL_API_URL = os.getenv("RETRIEVAL_API_URL",
+                               "http://localhost:8001/retrieve")
+# retrieval API: expects query and returns chunks + scores
+
+# LLM setup
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise RuntimeError("Missing OPENAI_API_KEY environment variable")
+
+llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY,
+                 model_name="gpt-3.5-turbo",
+                 temperature=0.2)
+
+# Prompt template: you can refine this
+template = """
+You are an intelligent assistant. Use the following retrieved context and the conversation history to answer the user.
+
+Conversation history:
+{history}
+
+Retrieved context:
+{context}
+
+User question:
+{question}
+
+Answer:
+"""
+
+prompt = PromptTemplate(
+    input_variables=["history", "context", "question"],
+    template=template
+)
+
+# MongoDB client
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+chat_collection = db[COLLECTION_NAME]
+
+# Pydantic models
+class ChatRequest(BaseModel):
+    session_id: Optional[str] = None
+    question: str
+
+class ChatResponse(BaseModel):
+    session_id: str
+    answer: str
+
+# FastAPI app
+app = FastAPI(title="Chatbot API with LangChain + RAG")
+
+def get_history(session_id: str) -> List[ChatMessage]:
+    """Fetch chat history for a session from MongoDB."""
+    rec = chat_collection.find_one({"session_id": session_id})
+    if not rec:
+        return []
+    msgs = rec.get("messages", [])
+    # convert stored dicts to ChatMessage objects
+    history = []
+    for m in msgs:
+        if m["role"] == "user":
+            history.append(HumanMessage(content=m["content"]))
+        else:
+            history.append(AIMessage(content=m["content"]))
+    return history
+
+def save_history(session_id: str, messages: List[ChatMessage]):
+    """Save chat history (user+assistant) back to MongoDB for the session."""
+    # convert ChatMessage list to dict list
+    docs = []
+    for m in messages:
+        role = "assistant" if isinstance(m, AIMessage) else "user"
+        docs.append({"role": role, "content": m.content})
+    chat_collection.update_one(
+        {"session_id": session_id},
+        {"$set": {"messages": docs}},
+        upsert=True
+    )
+
+def call_retrieval_api(question: str):
+    """Call external retrieval API to fetch context chunks."""
+    resp = requests.post(RETRIEVAL_API_URL, json={"query": question})
+    if resp.status_code != 200:
+        raise HTTPException(status_code=500, detail="Retrieval API error")
+    return resp.json()  # expect something like {"chunks":[{"text":..., "score":...}, ...]}
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    # Determine session_id
+    session_id = req.session_id or str(uuid.uuid4())
+    question = req.question
+
+    # 1. Fetch history
+    history = get_history(session_id)
+
+    # 2. Call retrieval/search
+    retrieval_result = call_retrieval_api(question)
+    chunks = retrieval_result.get("chunks", [])
+    # Build context string: you might pick top k
+    top_chunks = sorted(chunks, key=lambda x: x["score"], reverse=True)[:5]
+    context_str = "\n\n".join([c["text"] for c in top_chunks])
+
+    # 3. Build prompt with history + context + question
+    # Convert history ChatMessages into plain text
+    history_str = "\n".join(
+        [("User: " + m.content) if isinstance(m, HumanMessage) else ("Assistant: " + m.content)
+         for m in history]
+    )
+    # Merge into prompt
+    formatted = prompt.format(history=history_str,
+                              context=context_str,
+                              question=question)
+
+    # 4. Call LLM
+    response = llm.invoke([HumanMessage(content=formatted)])
+    answer = response.content.strip()
+
+    # 5. Update history
+    new_history = history.copy()
+    new_history.append(HumanMessage(content=question))
+    new_history.append(AIMessage(content=answer))
+    save_history(session_id, new_history)
+
+    # 6. Return response
+    return ChatResponse(session_id=session_id, answer=answer)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
